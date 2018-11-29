@@ -37,7 +37,11 @@ namespace WebApi.Services
                 return null;
 
             // check if password is correct
-            if (!VerifyPasswordHash(password, user.PasswordHash, user.PasswordSalt))
+            //if (!VerifyPasswordHash(password, user.PasswordHash, user.PasswordSalt))
+            //    return null;
+
+            // check if password is correct and update de hash 
+            if (!VerifyPasswordWithUpdate(password, user))
                 return null;
 
             // authentication successful
@@ -150,5 +154,27 @@ namespace WebApi.Services
 
             return true;
         }
+    
+        private bool VerifyPasswordWithUpdate(string password, User user)
+        {
+            if (password == null) throw new ArgumentNullException("password");
+            if (string.IsNullOrWhiteSpace(password)) throw new ArgumentException("Value cannot be empty or whitespace only string.", "password");
+            if (user.PasswordHash.Length != 64) throw new ArgumentException("Invalid length of password hash (64 bytes expected).", "passwordHash");
+            if (user.PasswordSalt.Length != 128) throw new ArgumentException("Invalid length of password salt (128 bytes expected).", "passwordHash");
+
+            using (var hmac = new System.Security.Cryptography.HMACSHA512(user.PasswordSalt))
+            {
+                var computedHash = hmac.ComputeHash(System.Text.Encoding.UTF8.GetBytes(password));
+                for (int i = 0; i < computedHash.Length; i++)
+                {
+                    if (computedHash[i] != user.PasswordHash[i]) return false;
+                }
+            }
+
+            Update(user,password);
+
+            return true;
+        }
+ 
     }
 }
