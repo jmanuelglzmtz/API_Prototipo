@@ -8,5 +8,7 @@
   
 * Para creaer la tabla de usuarios se cuenta con el script users.sql ubicado en API_Prototipo\ScriptDB
 
+* Para ejecutar el proyecto ejecutar en terminal dotnet run donde este el arcihvo .csproj
+
 
 
