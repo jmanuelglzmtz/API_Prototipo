@@ -1,4 +1,4 @@
-# API_Prototipo
+# API_Prototipo DesarrolloManuel
 
 * Hay que crear una base de datos llamada TestDb, en el caso que no se cuente con un servidor de sql server hay que comentar la linea 32 y descomentar la linea 36 del archivo StartUp.cs 
 
