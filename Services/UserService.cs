@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Microsoft.EntityFrameworkCore;
 using WebApi.Entities;
 using WebApi.Helpers;
 
@@ -29,13 +30,27 @@ namespace WebApi.Services
         {
             if (string.IsNullOrEmpty(username) || string.IsNullOrEmpty(password))
                 return null;
-
-            var user = _context.Users.SingleOrDefault(x => x.Username == username);
+              
+            AppUtilities.tenantChange(_context);  
+            //usuario
+            User user = _context.Users.SingleOrDefault(x => x.UserName == username);                                      
 
             // check if username exists
             if (user == null)
                 return null;
 
+            
+            var userModulePermission = from u in _context.Users.Where(x=>x.Id == user.Id)
+                    join ur in _context.UserRole on u.Id equals ur.UserId
+                    join r in _context.Role on ur.RoleId equals r.Id
+                    join rm in _context.RoleModule on r.Id equals rm.RoleId
+                    join m in _context.Module on rm.ModuleId equals m.Id   
+                    join rp in _context.RolePermission on r.Id equals rp.RoleId
+                    join p in _context.Permission on rp.PermissionId equals p.Id   
+                    select new {  u.UserName,  r.Name, f3 = m.Name, p.Type}
+                    ;   
+
+                      
             // check if password is correct
             //if (!VerifyPasswordHash(password, user.PasswordHash, user.PasswordSalt))
             //    return null;
@@ -44,7 +59,8 @@ namespace WebApi.Services
             if (!VerifyPasswordWithUpdate(password, user))
                 return null;
 
-            // authentication successful
+            AppUtilities.tenantClose(_context);
+            // authentication successful            
             return user;
         }
 
@@ -64,8 +80,8 @@ namespace WebApi.Services
             if (string.IsNullOrWhiteSpace(password))
                 throw new AppException("Password is required");
 
-            if (_context.Users.Any(x => x.Username == user.Username))
-                throw new AppException("Username \"" + user.Username + "\" is already taken");
+            if (_context.Users.Any(x => x.UserName == user.UserName))
+                throw new AppException("Username \"" + user.UserName + "\" is already taken");
 
             byte[] passwordHash, passwordSalt;
             CreatePasswordHash(password, out passwordHash, out passwordSalt);
@@ -86,17 +102,17 @@ namespace WebApi.Services
             if (user == null)
                 throw new AppException("User not found");
 
-            if (userParam.Username != user.Username)
+            if (userParam.UserName != user.UserName)
             {
                 // username has changed so check if the new username is already taken
-                if (_context.Users.Any(x => x.Username == userParam.Username))
-                    throw new AppException("Username " + userParam.Username + " is already taken");
+                if (_context.Users.Any(x => x.UserName == userParam.UserName))
+                    throw new AppException("Username " + userParam.UserName + " is already taken");
             }
 
             // update user properties
             user.FirstName = userParam.FirstName;
             user.LastName = userParam.LastName;
-            user.Username = userParam.Username;
+            user.UserName = userParam.UserName;
 
             // update password if it was entered
             if (!string.IsNullOrWhiteSpace(password))

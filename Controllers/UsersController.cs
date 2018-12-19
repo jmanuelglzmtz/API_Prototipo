@@ -38,7 +38,7 @@ namespace WebApi.Controllers
         [HttpPost("authenticate")]
         public IActionResult Authenticate([FromBody]UserDto userDto)
         {
-            var user = _userService.Authenticate(userDto.Username, userDto.Password);
+            var user = _userService.Authenticate(userDto.UserName, userDto.Password);
 
             if (user == null)
                 return BadRequest(new { message = "Username or password is incorrect" });
@@ -60,7 +60,7 @@ namespace WebApi.Controllers
             // return basic user info (without password) and token to store client side
             return Ok(new {
                 Id = user.Id,
-                Username = user.Username,
+                Username = user.UserName,
                 FirstName = user.FirstName,
                 LastName = user.LastName,
                 Token = tokenString
@@ -104,7 +104,7 @@ namespace WebApi.Controllers
         }
 
         [HttpPut("{id}")]
-        public IActionResult Update(int id, [FromBody]UserDto userDto)
+        public IActionResult Update(Guid id, [FromBody]UserDto userDto)
         {
             // map dto to entity and set id
             var user = _mapper.Map<User>(userDto);

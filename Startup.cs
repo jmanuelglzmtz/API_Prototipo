@@ -29,7 +29,7 @@ namespace WebApi
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            var connection = @"Server=localhost\SQLEXPRESS;Database=TestDb;Trusted_Connection=True;ConnectRetryCount=0";
+            var connection = @"Server=localhost\SQLEXPRESS;Database=testdbanakin;Trusted_Connection=True;ConnectRetryCount=0";
 
             services.AddCors();            
 
@@ -81,6 +81,7 @@ namespace WebApi
 
             // configure DI for application services
             services.AddScoped<IUserService, UserService>();
+            services.AddScoped<IProductService, ProductService>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -96,7 +97,7 @@ namespace WebApi
                 .AllowAnyHeader()
                 .AllowCredentials());
 
-            app.UseAuthentication();
+            //app.UseAuthentication();
 
             app.UseMvc();
         }
