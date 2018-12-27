@@ -2,14 +2,16 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Microsoft.EntityFrameworkCore;
+using WebApi.Dtos;
 using WebApi.Entities;
 using WebApi.Helpers;
+
 
 namespace WebApi.Services
 {
     public interface IUserService
     {
-        User Authenticate(string username, string password);
+        UserRolModulePermissionDto Authenticate(string username, string password);
         IEnumerable<User> GetAll();
         User GetById(int id);
         User Create(User user, string password);
@@ -26,7 +28,7 @@ namespace WebApi.Services
             _context = context;
         }
 
-        public User Authenticate(string username, string password)
+        public UserRolModulePermissionDto Authenticate(string username, string password)
         {
             if (string.IsNullOrEmpty(username) || string.IsNullOrEmpty(password))
                 return null;
@@ -37,31 +39,92 @@ namespace WebApi.Services
 
             // check if username exists
             if (user == null)
-                return null;
+                return null;                      
+
+            // check if password is correct and update de hash 
+            if (!VerifyPasswordWithUpdate(password, user))
+                return null;                
 
             
-            var userModulePermission = from u in _context.Users.Where(x=>x.Id == user.Id)
+            var userModulePermission = (from u in _context.Users.Where(x=>x.Id == user.Id)
                     join ur in _context.UserRole on u.Id equals ur.UserId
                     join r in _context.Role on ur.RoleId equals r.Id
                     join rm in _context.RoleModule on r.Id equals rm.RoleId
                     join m in _context.Module on rm.ModuleId equals m.Id   
                     join rp in _context.RolePermission on r.Id equals rp.RoleId
                     join p in _context.Permission on rp.PermissionId equals p.Id   
-                    select new {  u.UserName,  r.Name, f3 = m.Name, p.Type}
-                    ;   
+                    select new {  u.UserName,  roleName = r.Name , moduleName = m.Name, typeName = p.Type, iconName = m.Icon, FirstName = u.FirstName, ImageProfile=u.ImageProfile  }).ToList()
+                    ; 
+            UserRolModulePermissionDto myUser = new UserRolModulePermissionDto();
+            
+            
+            
+            var mygroup = userModulePermission
+                    .GroupBy(y=>y.UserName)                    
+                    .ToList()
+                    ;
+            List<RolDto> lstMyRoles = new List<RolDto>();    
+            foreach(var group in mygroup)
+            {
+                RolDto myRoles = new RolDto();  
+                var myRol = userModulePermission
+                                .Where(y=>y.UserName == group.Key)
+                                .GroupBy(y=>y.roleName)                                
+                                .ToList();
+                
+                List<ModuleDto> lstMyModules = new List<ModuleDto>();
+                foreach (var rol in myRol)
+                {
+                    
 
-                      
-            // check if password is correct
-            //if (!VerifyPasswordHash(password, user.PasswordHash, user.PasswordSalt))
-            //    return null;
+                    var mymodule = userModulePermission
+                                    .Where(y=>(y.UserName==group.Key && y.roleName==rol.Key) )
+                                    .GroupBy(y=>y.moduleName)
+                                    .ToList();
+                    foreach(var module in mymodule)
+                    {
+                        ModuleDto myModules = new ModuleDto();
+                        TypeDto myTypes = new TypeDto();
+                        myTypes.TypeName= new List<string>();
 
-            // check if password is correct and update de hash 
-            if (!VerifyPasswordWithUpdate(password, user))
-                return null;
+                        var myType = userModulePermission
+                                        .Where(y=>(y.UserName==group.Key && y.roleName==rol.Key && y.moduleName==module.Key) )                                        
+                                        .ToList();
+                        
+                        foreach(var type in myType)
+                        {
+                            string ty;
+                            ty=type.typeName;
+                            myTypes.TypeName.Add(ty);
+                        }
+
+                        myModules.Types=myTypes;                        
+
+                        myModules.IconName = userModulePermission
+                                        .Where(y=>(y.UserName==group.Key && y.roleName==rol.Key && y.moduleName==module.Key) )                                        
+                                        .FirstOrDefault().iconName;
+                        
+                        myModules.ModuleName=module.Key;
+                        
+                        lstMyModules.Add(myModules);
+                    }                                        
+                    myRoles.RolName=rol.Key;
+                    myRoles.Modules=lstMyModules;
+                    lstMyRoles.Add(myRoles);
+                }
+                myUser.FirstName=group.FirstOrDefault().FirstName;
+
+                myUser.ImageProfile = group.FirstOrDefault().ImageProfile;
+
+                myUser.UserName=group.Key;
+
+                myUser.Roles=lstMyRoles;
+            }
+            //var json = Newtonsoft.Json.JsonConvert.SerializeObject(myUser);
 
             AppUtilities.tenantClose(_context);
             // authentication successful            
-            return user;
+            return myUser;
         }
 
         public IEnumerable<User> GetAll()
