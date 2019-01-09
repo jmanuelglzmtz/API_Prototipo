@@ -13,7 +13,8 @@ namespace WebApi.Services
     {
         UserRolModulePermissionDto Authenticate(string username, string password);
         IEnumerable<User> GetAll();
-        User GetById(int id);
+        User GetById(Guid id);
+        User GetByUserName(string userName);
         User Create(User user, string password);
         void Update(User user, string password = null);
         void Delete(int id);
@@ -132,11 +133,15 @@ namespace WebApi.Services
             return _context.Users;
         }
 
-        public User GetById(int id)
+        public User GetById(Guid id)
         {
             return _context.Users.Find(id);
         }
-
+        public User GetByUserName(string userName)
+        {
+            AppUtilities.tenantChange(_context);
+            return _context.Users.Where(x=>x.UserName == userName).FirstOrDefault();
+        }
         public User Create(User user, string password)
         {
             // validation

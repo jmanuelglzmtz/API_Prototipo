@@ -11,7 +11,13 @@ namespace WebApi.Services
 {
     public interface IRoleService
     {        
-        IEnumerable<RoleDto> GetAll();        
+        IEnumerable<RoleDto> GetAll();
+
+        void Update(Role rol);   
+
+        Boolean Create(Role rol);     
+
+        Boolean Delete(Guid Id);
     }
 
     public class RoleService : IRoleService
@@ -28,6 +34,7 @@ namespace WebApi.Services
 
             var myRoles = (from rol in _context.Role
                             select new RoleDto{
+                                Id = rol.Id,
                                 Name = rol.Name,
                                 Estatus = rol.Status == 1 ? "Activo" : "Inactivo"
                             }).ToList()
@@ -36,6 +43,54 @@ namespace WebApi.Services
             return myRoles;
         }
 
+        public void Update(Role role)
+        {
+            AppUtilities.tenantChange(_context); 
+            var rol = _context.Role.Find(role.Id);
 
+            if (rol == null)
+                throw new AppException("Role not found");            
+
+            // update user properties
+            rol.Name = role.Name;
+            rol.Status = role.Status;
+
+            _context.Role.Update(rol);
+            _context.SaveChanges();
+        }
+
+        public Boolean Create(Role role)
+        {
+            try
+            {
+                AppUtilities.tenantChange(_context);             
+                _context.Role.Add(role);
+                _context.SaveChanges();
+                return true;
+            }
+            catch
+            {
+                return false;
+            }                        
+        }
+
+        public Boolean Delete(Guid id)
+        {
+            try
+            {
+                AppUtilities.tenantChange(_context);
+                var rol = _context.Role.Find(id);
+                if (rol != null)
+                {
+                    _context.Role.Remove(rol);
+                    _context.SaveChanges();
+                }
+                return true;
+            }
+            catch 
+            {
+                return false;
+            }            
+        }
     }
 }

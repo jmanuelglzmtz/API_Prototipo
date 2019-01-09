@@ -93,7 +93,7 @@ namespace WebApi.Controllers
         }
 
         [HttpGet("{id}")]
-        public IActionResult GetById(int id)
+        public IActionResult GetById(Guid id)
         {
             var user =  _userService.GetById(id);
             var userDto = _mapper.Map<UserDto>(user);
