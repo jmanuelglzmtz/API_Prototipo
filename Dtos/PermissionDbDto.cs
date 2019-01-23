@@ -4,10 +4,10 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace WebApi.Entities
 {
-        public class RoleDto
+    public class PermissionDbDto
     {
         public Guid Id { get; set; }
-        public string Name { get; set; }
+        public string Type { get; set; }
         public string Status { get; set; }
     }
 }

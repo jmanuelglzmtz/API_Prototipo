@@ -18,18 +18,18 @@ namespace WebApi.Controllers
     [Authorize]
     [ApiController]
     [Route("[controller]")]
-    public class RolesController : ControllerBase
+    public class PermissionsController : ControllerBase
     {
-        private IRoleService _roleService;
+        private IPermissionService _permissionService;
         private IMapper _mapper;
         private readonly AppSettings _appSettings;
 
-        public RolesController(
-            IRoleService roleService,
+        public PermissionsController(
+            IPermissionService permissionService,
             IMapper mapper,
             IOptions<AppSettings> appSettings)
         {
-            _roleService = roleService;
+            _permissionService = permissionService;
             _mapper = mapper;
             _appSettings = appSettings.Value;
         }
@@ -37,14 +37,14 @@ namespace WebApi.Controllers
         [HttpGet]
         public IActionResult GetAll()
         {
-            var roles =  _roleService.GetAll();
+            var permissions =  _permissionService.GetAll();
             //var userDtos = _mapper.Map<IList<UserDto>>(users);
             //return Ok(userDtos);
-            return Ok(roles);
+            return Ok(permissions);
         }
 
         [HttpPut("{id}")]
-        public IActionResult Update(Guid id, [FromBody]RoleDto rolDto)
+        public IActionResult Update(Guid id, [FromBody]PermissionDbDto permissionDbDto)
         {
             
             // map dto to entity and set id
@@ -52,15 +52,16 @@ namespace WebApi.Controllers
             var user = _mapper.Map<Rol>(rolDto);
             user.Id = id;
             */
-            var myRol= new Role();
-            myRol.Id=rolDto.Id;
-            myRol.Name=rolDto.Name;
-            myRol.Status=rolDto.Status== "Activo" ? 1 : 0;
+            var myPermission = new Permission();
+            myPermission.Id = permissionDbDto.Id;
+            myPermission.Type = permissionDbDto.Type;
+            myPermission.Status = permissionDbDto.Status== "Activo" ? 1 : 0;
+            
             try 
             {
                 // save 
                 
-                _roleService.Update(myRol);
+                _permissionService.Update(myPermission);
                 return Ok();
             } 
             catch(AppException ex)
@@ -73,20 +74,20 @@ namespace WebApi.Controllers
         
         [AllowAnonymous]
         [HttpPost("register")]
-        public IActionResult Register([FromBody]RoleDto rolDto)
+        public IActionResult Register([FromBody]PermissionDbDto permissionDbDto)
         {
             // map dto to entity
             
 
             try 
             {
-                var myRol= new Role();
-                myRol.Id=rolDto.Id;
-                myRol.Name=rolDto.Name;
-                myRol.Status=rolDto.Status== "Activo" ? 1 : 0;
-                myRol.TenantId = Guid.Parse("A4C482BF-1468-4460-BE9B-2C325926230D");
+                var myPermission = new Permission();
+                myPermission.Id = permissionDbDto.Id;
+                myPermission.Type = permissionDbDto.Type;
+                myPermission.Status = permissionDbDto.Status== "Activo" ? 1 : 0;
+                myPermission.TenantId = Guid.Parse("A4C482BF-1468-4460-BE9B-2C325926230D");
                 // save 
-               var create=_roleService.Create(myRol);
+               var create=_permissionService.Create(myPermission);
                if(create)
                {
                    return Ok();
@@ -107,7 +108,7 @@ namespace WebApi.Controllers
         [HttpDelete("{id}")]
         public IActionResult Delete(Guid id)
         {
-            _roleService.Delete(id);
+            _permissionService.Delete(id);
             return Ok();
         }
     }

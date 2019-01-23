@@ -36,7 +36,7 @@ namespace WebApi.Services
                             select new RoleDto{
                                 Id = rol.Id,
                                 Name = rol.Name,
-                                Estatus = rol.Status == 1 ? "Activo" : "Inactivo"
+                                Status = rol.Status == 1 ? "Activo" : "Inactivo"
                             }).ToList()
             ;
 

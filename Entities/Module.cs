@@ -9,8 +9,9 @@ namespace WebApi.Entities
     {
         public Guid Id { get; set; }
         public string Name { get; set; }
-        public string Compenent { get; set; }
+        public string Component { get; set; }
         public string Icon { get; set; }
         public int Status { get; set; }
+        public Guid TenantId { get; set; }
     }
 }
